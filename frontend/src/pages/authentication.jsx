@@ -1,160 +1,144 @@
-import * as React from 'react';
-import Avatar from '@mui/material/Avatar';
-import Button from '@mui/material/Button';
-import CssBaseline from '@mui/material/CssBaseline';
-import TextField from '@mui/material/TextField';
-import FormControlLabel from '@mui/material/FormControlLabel';
-import Checkbox from '@mui/material/Checkbox';
-import Link from '@mui/material/Link';
-import Paper from '@mui/material/Paper';
-import Box from '@mui/material/Box';
-import Grid from '@mui/material/Grid';
-import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
-import Typography from '@mui/material/Typography';
-import { createTheme, ThemeProvider } from '@mui/material/styles';
+import React, { useState, useContext } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { AuthContext } from "../contexts/AuthContext";
-import Snackbar from '@mui/material/Snackbar';
-import { useNavigate } from 'react-router-dom';
-
-// TODO remove, this demo shouldn't need to reset the theme.
-const defaultTheme = createTheme();
+// import { useNavigate } from "react-router-dom";
+import "../styles/authentication.css";
 
 export default function Authentication() {
-  const navigate = useNavigate();
-  const [username, setUsername] = React.useState();
-  const [password, setPassword] = React.useState();
-  const [name, setName] = React.useState();
-  const [error, setError] = React.useState();
-  const [message, setMessage] = React.useState();
-  const [formState, setFormState] = React.useState(0);
-  const [open, setOpen] = React.useState(false);
-  const {handleRegister, handleLogin} = React.useContext(AuthContext);
-  let handleAuth = async() =>{
-    try{
-      if(formState===0){
-        let result = await handleLogin(username, password);
-        // navigate('/home');
-      }
-      if(formState===1){
-        let result = await handleRegister(name, username, password);
-        // console.log(result);
-        setUsername("");
-        setMessage(result);
-        setOpen(true);
+    const location = useLocation();
+    const [isActive, setIsActive] = useState(location.state?.isRegister || false);
+
+    // Sign In state
+    const [loginUsername, setLoginUsername] = useState("");
+    const [loginPassword, setLoginPassword] = useState("");
+
+    // Sign Up state
+    const [registerName, setRegisterName] = useState("");
+    const [registerUsername, setRegisterUsername] = useState("");
+    const [registerPassword, setRegisterPassword] = useState("");
+
+    const [error, setError] = useState("");
+    const [message, setMessage] = useState("");
+
+    const { handleLogin, handleRegister } = useContext(AuthContext);
+    const navigate = useNavigate();
+
+    const handleLoginSubmit = async (e) => {
+        e.preventDefault();
         setError("");
-        setFormState(0);
-        setPassword("");
-      } 
-    }catch(err){
-      let message = (err.response.data.message);
-      setError(message);
-    }
-  }
+        try {
+            await handleLogin(loginUsername, loginPassword);
+            navigate("/home");
+        } catch (err) {
+            setError(err.response?.data?.message || "Login failed");
+        }
+    };
 
-  return (
-    <ThemeProvider theme={defaultTheme}>
-      <Grid container component="main" sx={{ height: '100vh' }}>
-        <CssBaseline />
-        <Grid
-          item
-          xs={false}
-          sm={4}
-          md={7}
-          sx={{
-            height: '100vh',
-            backgroundImage: 'url(https://picsum.photos/1200/800)',
-            backgroundRepeat: 'no-repeat',
-            backgroundColor: (t) =>
-              t.palette.mode === 'light' ? t.palette.grey[50] : t.palette.grey[900],
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-          }}
-        />
-        <Grid item xs={12} sm={8} md={5} component={Paper} elevation={6} square>
-          <Box
-            sx={{
-              my: 8,
-              mx: 4,
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-            }}
-          >
-            <Avatar sx={{ m: 1, bgcolor: 'secondary.main' }}>
-              <LockOutlinedIcon />
-            </Avatar>
+    const handleRegisterSubmit = async (e) => {
+        e.preventDefault();
+        setError("");
+        try {
+            const result = await handleRegister(registerName, registerUsername, registerPassword);
+            setMessage(result);
+            setIsActive(false); // switch to login panel
+            setRegisterName("");
+            setRegisterUsername("");
+            setRegisterPassword("");
+        } catch (err) {
+            setError(err.response?.data?.message || "Registration failed");
+        }
+    };
 
-            <div>
-              <Button variant={formState === 0 ? "contained": ""} onClick={()=>{setFormState(0)}}>
-                Sign In
-              </Button>
-              <Button variant={formState === 1 ? "contained": ""} onClick={()=>{setFormState(1)}}>
-                Sign Up
-              </Button>
+    return (
+        <div className="auth-body">
+            <div className={`auth-container ${isActive ? "active" : ""}`}>
+
+                {/* Sign Up Form */}
+                <div className="auth-form-container sign-up">
+                    <form onSubmit={handleRegisterSubmit}>
+                        <h1>Create Account</h1>
+                        <div className="social-icons">
+                            <a href="#" className="icon"><i className="fa-brands fa-google-plus-g"></i></a>
+                            <a href="#" className="icon"><i className="fa-brands fa-facebook-f"></i></a>
+                            <a href="#" className="icon"><i className="fa-brands fa-github"></i></a>
+                            <a href="#" className="icon"><i className="fa-brands fa-linkedin-in"></i></a>
+                        </div>
+                        <span>or use your email for registration</span>
+                        <input
+                            type="text"
+                            placeholder="Name"
+                            value={registerName}
+                            onChange={e => setRegisterName(e.target.value)}
+                            required
+                        />
+                        <input
+                            type="text"
+                            placeholder="Username"
+                            value={registerUsername}
+                            onChange={e => setRegisterUsername(e.target.value)}
+                            required
+                        />
+                        <input
+                            type="password"
+                            placeholder="Password"
+                            value={registerPassword}
+                            onChange={e => setRegisterPassword(e.target.value)}
+                            required
+                        />
+                        {error && <p style={{color:"red", fontSize:"12px"}}>{error}</p>}
+                        {message && <p style={{color:"green", fontSize:"12px"}}>{message}</p>}
+                        <button type="submit">Sign Up</button>
+                    </form>
+                </div>
+
+                {/* Sign In Form */}
+                <div className="auth-form-container sign-in">
+                    <form onSubmit={handleLoginSubmit}>
+                        <h1>Log In</h1>
+                        <div className="social-icons">
+                            <a href="#" className="icon"><i className="fa-brands fa-google-plus-g"></i></a>
+                            <a href="#" className="icon"><i className="fa-brands fa-facebook-f"></i></a>
+                            <a href="#" className="icon"><i className="fa-brands fa-github"></i></a>
+                            <a href="#" className="icon"><i className="fa-brands fa-linkedin-in"></i></a>
+                        </div>
+                        <span>or use your username and password</span>
+                        <input
+                            type="text"
+                            placeholder="Username"
+                            value={loginUsername}
+                            onChange={e => setLoginUsername(e.target.value)}
+                            required
+                        />
+                        <input
+                            type="password"
+                            placeholder="Password"
+                            value={loginPassword}
+                            onChange={e => setLoginPassword(e.target.value)}
+                            required
+                        />
+                        <a href="#">Forget Your Password?</a>
+                        {error && <p style={{color:"red", fontSize:"12px"}}>{error}</p>}
+                        <button type="submit">Log In</button>
+                    </form>
+                </div>
+
+                {/* Toggle Panel */}
+                <div className="toggle-container">
+                    <div className="toggle">
+                        <div className="toggle-panel toggle-left">
+                            <h1>Welcome Back!</h1>
+                            <p>Enter your personal details to use all of site features</p>
+                            <button className="hidden" onClick={() => setIsActive(false)}>Log In</button>
+                        </div>
+                        <div className="toggle-panel toggle-right">
+                            <h1>Hello, Friend!</h1>
+                            <p>Register with your personal details to use all of site features</p>
+                            <button className="hidden" onClick={() => setIsActive(true)}>Sign Up</button>
+                        </div>
+                    </div>
+                </div>
+
             </div>
-
-            <Box component="form" noValidate sx={{ mt: 1 }}>
-            <p>{name}</p>
-              {formState === 1 ? <TextField
-                margin="normal"
-                required
-                fullWidth
-                id="username"
-                label="Full Name"
-                name="username"
-                value={name}
-                // autoFocus
-                onChange={(e)=>setName(e.target.value)}
-              />: <></>}
-              
-              <TextField
-                margin="normal"
-                required
-                fullWidth
-                id="username"
-                label="Username"
-                name="username"
-                value={username}
-                autoFocus
-                onChange={(e)=>setUsername(e.target.value)}
-              />
-              <TextField
-                margin="normal"
-                required
-                fullWidth
-                name="password"
-                label="Password"
-                value={password}
-                type="password"
-                id="password"
-                // autoComplete="current-password"
-                onChange={(e)=>setPassword(e.target.value)}
-              />
-              
-                <p style={{color:"red"}}>{error}</p>
-
-              <Button
-                type="button"
-                fullWidth
-                variant="contained"
-                sx={{ mt: 3, mb: 2 }}
-                onClick={handleAuth}
-              >
-                {formState=== 0 ? "Login" : "Register"}
-                
-              </Button>
-            </Box>
-          </Box>
-        </Grid>
-      </Grid>
-
-                <Snackbar
-                  open={open}
-                  autoHideDuration={4000}
-                  // onClose={() => setOpen(false)}
-                  message={message}
-                />
-
-    </ThemeProvider>
-  );
+        </div>
+    );
 }

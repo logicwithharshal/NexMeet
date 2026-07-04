@@ -22,13 +22,13 @@ export default function LandingPage() {
           <p onClick={() => {
               router("/auth");
             }}>
-            Register
+            Log In
           </p>
-          <div role="button" onClick={() => {
-              router("/auth");
+          <p onClick={() => {
+            router("/auth", { state: { isRegister: true } });
             }}>
-            <p>Login</p>
-          </div>
+            Sign Up
+          </p>
         </div>
       </nav>
       <div className="landingMainContainer">

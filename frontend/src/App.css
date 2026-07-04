@@ -71,7 +71,9 @@
 
 }
 .landingMainContainer > div:nth-child(2) img{
-  height: 81vh;
+  /* padding-top: 50px; */
+  /* margin-top: 10px; */
+  height: 80vh;
   width: auto;
   padding-right: 110px;
 }
